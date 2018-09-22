@@ -69,30 +69,29 @@ def MachineLearning(df):
     data = data.withColumn('length',length(data['Summary']))
     # Basic sentence tokenizer
     tokenizer = Tokenizer(inputCol="Summary", outputCol="words")
-    wordsData = tokenizer.transform(data)
+   
     #remove stop words
     remover = StopWordsRemover(inputCol="words", outputCol="filtered_features")
-    filterd_data = remover.transform(wordsData)
-    filterd_data = filterd_data.select(['label','filtered_features','length'])
+   
     #transoform dataset to vectors
     cv = CountVectorizer(inputCol="filtered_features", outputCol="features1", minDF=2.0)
-    cv_model = cv.fit(filterd_data)
-    data_new = cv_model.transform(filterd_data)
+  
     #calculate IDF for all dataset
     idf = IDF(inputCol= 'features1', outputCol = 'tf_idf')
-    idfModel = idf.fit(data_new)
-    rescaledData = idfModel.transform(data_new)
+   
     #prepare data for ML spark library
     cleanUp = VectorAssembler(inputCols =['tf_idf','length'],outputCol='features')
-    output = cleanUp.transform(rescaledData)
-    output = output.select(['label','features'])
-    #split dataset to training and testing 
-    train_data, test_data = output.randomSplit([0.7,0.3],seed = 300)
+   
+    train_data, test_data = data.randomSplit([0.7,0.3],seed = 300)
     #we chose naive bayes
     nb = NaiveBayes()
+    #add pipline technique
+    pipeline = Pipeline(stages=[tokenizer, remover, cv,idf,cleanUp,nb])
+    # Fit the pipeline to training documents.
+    model = pipeline.fit(train_data)
     #fit data to the model
-    model = nb.fit(train_data)
-    model_path = 'G:/Projects/Text-Classification-with-spark-master/Text Classifiation using Spark/Text Classifiation using Spark/model/'
+    #model = nb.fit(train_data)
+    model_path = 'C:/Users/Shehab/Source/Repos/Text-Classification-with-spark/Text Classifiation using Spark/Text Classifiation using Spark/model/'
     try:
         model.save(model_path )
     except:
