@@ -7,11 +7,10 @@ from pyspark.ml.feature import (HashingTF, VectorAssembler,CountVectorizer, IDF,
 from pyspark.ml.pipeline import Pipeline
 from pyspark.sql.functions import length
 from pyspark.ml.evaluation import MulticlassClassificationEvaluator
-
+from sklearn.metrics import roc_curve, auc
+from matplotlib import pyplot as plt
 import sys
 import gc
-import os
-import shutil
 
 spark = SparkSession.builder.\
     config("spark.executor.memory", "4g")\
@@ -22,7 +21,7 @@ spark = SparkSession.builder.\
                   .config("spark.driver.maxResultSize","0")\
                   .config("spark.default.parallelism","2")\
     .appName('ML_project').getOrCreate()
-
+sc = spark.sparkContext
 #This function is used to load big json file
 def read_json(filePath):
     df = spark.read.json(filePath)
@@ -35,6 +34,34 @@ def read_csv(filePath):
     
     #final_df.printSchema()
     return df_shcema
+
+def DrawROC(results):
+    ## prepare score-label set
+    results_collect = results.collect()
+    results_list = [(float(i[0][0]), 1.0-float(i[1])) for i in results_collect]
+    y_test = [i[1] for i in results_list]
+    y_score = [i[0] for i in results_list]
+    fpr = dict()
+    tpr = dict()
+    roc_auc = dict()
+ 
+    y_test = [i[1] for i in results_list]
+    y_score = [i[0] for i in results_list]
+ 
+    fpr, tpr, _ = roc_curve(y_test, y_score)
+    roc_auc = auc(fpr, tpr)
+ 
+    
+    plt.figure()
+    plt.plot(fpr, tpr, label='ROC curve (area = %0.2f)' % roc_auc)
+    plt.plot([0, 1], [0, 1], 'k--')
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('ROC curve  ')
+    plt.legend(loc="lower right")
+    plt.show()
 
 def MachineLearning(df):
     file_dataSVM = "G:/Projects/Spark-Machine-Learning/Spark Machine Learning/Spark Machine Learning/svm/"
@@ -65,8 +92,17 @@ def MachineLearning(df):
     nb = NaiveBayes()
     #fit data to the model
     model = nb.fit(train_data)
+    model_path = 'G:/Projects/Text-Classification-with-spark-master/Text Classifiation using Spark/Text Classifiation using Spark/model/'
+    try:
+        model.save(model_path )
+    except:
+        print('Error folder of model already exits')
+
     #test data send to the final model
     test_results = model.transform(test_data)
+    results = test_results.select(['probability', 'label'])
+    #draw ROC curve
+    DrawROC(results)
     #show random 10 rows from results
     test_results.show(10)
     #evaluate the model 

@@ -5,7 +5,7 @@
     <ProjectGuid>e9fd1591-6aea-469e-beaf-3121bbdb3bf9</ProjectGuid>
     <ProjectHome>.</ProjectHome>
     <StartupFile>Text_Classifiation_using_Spark.py</StartupFile>
-    <SearchPath>C:\Spark\bin;C:\Spark\python;C:\Spark\python\lib\py4j-0.10.7-src.zip</SearchPath>
+    <SearchPath>..\..\..\..\..\..\..\Spark\bin;..\..\..\..\..\..\..\Spark\python;..\..\..\..\..\..\..\Spark\python\lib\py4j-0.10.7-src.zip</SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <Name>Text Classifiation using Spark</Name>
